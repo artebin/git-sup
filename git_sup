@@ -1,0 +1,133 @@
+#!/usr/bin/env bash
+
+BLACK=$(tput setaf 0)
+RED=$(tput setaf 1)
+GREEN=$(tput setaf 2)
+YELLOW=$(tput setaf 3)
+LIME_YELLOW=$(tput setaf 190)
+POWDER_BLUE=$(tput setaf 153)
+BLUE=$(tput setaf 4)
+MAGENTA=$(tput setaf 5)
+CYAN=$(tput setaf 6)
+WHITE=$(tput setaf 7)
+BRIGHT=$(tput bold)
+NORMAL=$(tput sgr0)
+BLINK=$(tput blink)
+REVERSE=$(tput smso)
+UNDERLINE=$(tput smul)
+
+function git_sup() {
+	GIT_REPO_DIR_ARRAY=()
+	if [[ "${#}" -eq 0 ]]; then
+		for FILE in *; do
+			if [[ -d "${FILE}" ]]; then
+				GIT_REPO_DIR_ARRAY+=( "${FILE}" )
+			fi
+		done
+	else
+		for FILE in "${@}"; do
+			if [[ -d "${FILE}" ]]; then
+				GIT_REPO_DIR_ARRAY+=( "${FILE}" )
+			fi
+		done
+	fi
+	
+	# Register a trap to reset to the calling directory
+	
+	for GIT_REPO_DIR in "${GIT_REPO_DIR_ARRAY[@]}"; do
+		if [[ ! -d "${GIT_REPO_DIR}" ]]; then
+			printf "${YELLOW}%-30s${NORMAL}: Cannot find directory\n" "${GIT_REPO_DIR}"
+			continue
+		fi
+		
+		if [[ ! -d "${GIT_REPO_DIR}/.git" ]]; then
+			printf "${YELLOW}%-30s${NORMAL}: Not a GIT repository\n" "${GIT_REPO_DIR}"
+			continue
+		fi
+		
+		CALLING_WORKING_DIRECTORY="$(pwd)"
+		cd "${GIT_REPO_DIR}"
+		
+		# Retrieve current commit hash
+		GIT_CURRENT_COMMIT=$(git rev-parse HEAD 2>/dev/null)
+		if [[ "${?}" -ne 0 ]]; then
+			printf "${YELLOW}%-30s${NORMAL}: Cannot retrieve current commit hash\n"
+			cd "${CALLING_WORKING_DIRECTORY}"
+			continue
+		fi
+		
+		# Retrieve branch name
+		HEAD_SYMBOLIC_REF=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null)
+		if [[ "${?}" -ne 0 ]]; then
+			printf "${YELLOW}%-30s${NORMAL}: Cannot retrieve REF for branch name\n" "${GIT_REPO_DIR}"
+			cd "${CALLING_WORKING_DIRECTORY}"
+			continue
+		fi
+		GIT_BRANCH_NAME="${HEAD_SYMBOLIC_REF##*/}"
+		
+		# GIT fetch
+		git fetch >/dev/null 2>&1
+		if [[ "${?}" -ne 0 ]]; then
+			printf "${YELLOW}%-30s${NORMAL}: Something went wrong during git fetch\n" "${GIT_REPO_DIR}"
+			cd "${CALLING_WORKING_DIRECTORY}"
+			continue
+		fi
+		
+		# Retrieve pending changes count
+		PENDING_CHANGE_COUNT=$(git status --porcelain | wc -l 2>&1)
+		if [[ "${?}" -ne 0 ]]; then
+			printf "${YELLOW}%-30s${NORMAL}: Something went wrong while checking for local changes\n" "${GIT_REPO_DIR}"
+			cd "${CALLING_WORKING_DIRECTORY}"
+			continue
+		fi
+		
+		# Retrieve local commit count
+		LOCAL_COMMIT_COUNT=$(git rev-list FETCH_HEAD.."${GIT_BRANCH_NAME}" --count 2>/dev/null)
+		if [[ "${?}" -ne 0 ]]; then
+			printf "${YELLOW}%-30s${NORMAL}: Something went wrong while checking for local commits\n" "${GIT_REPO_DIR}"
+			cd "${CALLING_WORKING_DIRECTORY}"
+			continue
+		fi
+		
+		GIT_LOCAL_REPO_STATE=""
+		
+		# Check if there is local pending changes or local commits
+		GIT_PULL_FF_ONLY_TRACE=""
+		git merge-base --is-ancestor origin/"${GIT_BRANCH_NAME}" "${GIT_BRANCH_NAME}" >/dev/null 2>&1
+		if [[ "${?}" -eq 0 ]]; then
+			# Do we have local pending changes?
+			if [[ "${PENDING_CHANGE_COUNT}" -ne 0 ]]; then
+				GIT_LOCAL_REPO_STATE+=" | Pending changes"
+			else
+				GIT_LOCAL_REPO_STATE+=" | No pending changes"
+			fi
+			
+			# Do we have local commits?
+			if [[ "${LOCAL_COMMIT_COUNT}" -ne 0 ]]; then
+				GIT_LOCAL_REPO_STATE+=" | ${LOCAL_COMMIT_COUNT} local commit(s)"
+			else
+				GIT_LOCAL_REPO_STATE+=" | Synchronized with remote"
+			fi
+		else
+			git merge-base --is-ancestor "${GIT_CURRENT_COMMIT}" "${GIT_BRANCH_NAME}" >/dev/null 2>&1
+			if [[ "${?}" -eq 0 ]]; then
+				# No merge required, we can fast forward
+				#GIT_PULL_FF_ONLY_TRACE=$(git pull --ff-only)
+				GIT_LOCAL_REPO_STATE+=" | Pulled changes from remote"
+			else
+				GIT_LOCAL_REPO_STATE+=" | Merge required"
+			fi
+		fi
+		
+		GIT_LOCAL_REPO_STATE=$(echo "${GIT_LOCAL_REPO_STATE}" | sed 's/^[^a-zA-Z0-9]*//g')
+		
+		printf "${YELLOW}%-30s${NORMAL} [%s]: %s\n" "${GIT_REPO_DIR}" "${GIT_BRANCH_NAME}" "${GIT_LOCAL_REPO_STATE}"
+		if [[ ! -z "${GIT_PULL_FF_ONLY_TRACE}" ]]; then
+			printf "%s\n" "${GIT_PULL_FF_ONLY_TRACE}"
+		fi
+		
+		cd "${CALLING_WORKING_DIRECTORY}"
+	done
+}
+
+git_sup "${@}"
