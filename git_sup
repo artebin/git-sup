@@ -1,5 +1,15 @@
 #!/usr/bin/env bash
 
+print_usage(){
+	cat << EOF
+Usage: $(basename ${BASH_SOURCE}) [OPTION]... [GIT_PROJECT_FOLDER...]
+Show statuses of GIT projects given in arguments or all projects found in the current directory when no argument specified.
+
+  -f PERFORM_GIT_FETCH
+
+EOF
+}
+
 BLACK=$(tput setaf 0)
 RED=$(tput setaf 1)
 ORANGE=$(tput setaf 172)
@@ -21,7 +31,7 @@ CURRENT_WORKING_DIRECTORY="$(pwd)"
 trap "cd '${CURRENT_WORKING_DIRECTORY}'" 0
 
 RUN_FETCH_ON_GIT_REPO="false"
-while getopts "f" ARG; do
+while getopts "fh" ARG; do
 	case "${ARG}" in
 		h)
 			print_usage
