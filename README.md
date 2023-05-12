@@ -7,7 +7,7 @@ It is based only on git commands and in particular it parses the output of `git 
 
 ~~~
 Usage: git_sup [OPTION]... [GIT_PROJECT_FOLDER...]
-Show status of GIT projects given in arguments or of all projects found in the current directory when no argument specified.
+Show status of GIT projects given in arguments or of all projects found in the current directory when no argument are specified.
 
   -f PERFORM_GIT_FETCH
 ~~~
