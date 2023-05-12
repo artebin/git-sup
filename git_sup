@@ -49,37 +49,51 @@ while getopts "fh" ARG; do
 done
 shift $((OPTIND-1))
 
-GIT_REPO_DIR_ARRAY=()
+# Collect folders to inspect
+FOLDER_TO_INSPECT_ARRAY=()
 if [[ "${#}" -eq 0 ]]; then
-	for FILE in *; do
-		if [[ -d "${FILE}" ]]; then
-			GIT_REPO_DIR_ARRAY+=( "${FILE}" )
-		fi
-	done
+	# Check if CWD is already a GIT project then we add the parent folder only
+	if [[ -d ".git" ]]; then
+		FOLDER_TO_INSPECT_ARRAY+=( "." )
+	else
+		for FOLDER in *; do
+			if [[ ! -d "${FOLDER}" ]]; then
+				continue
+			fi
+			FOLDER_TO_INSPECT_ARRAY+=( "${FOLDER}" )
+		done
+	fi
 else
-	for FILE in "${@}"; do
-		if [[ -d "${FILE}" ]]; then
-			GIT_REPO_DIR_ARRAY+=( "${FILE}" )
-		fi
+	for FOLDER in "${@}"; do
+		FOLDER_TO_INSPECT_ARRAY+=( "${FOLDER}" )
 	done
 fi
+
+# Filter GIT repositories
+GIT_REPO_DIR_ARRAY=()
+for FOLDER_TO_INSPECT in "${FOLDER_TO_INSPECT_ARRAY[@]}"; do
+	FOLDER_TO_INSPECT_RESOLVED_PATH=$(readlink -e "${FOLDER_TO_INSPECT}")
+	if [[ "${?}" != 0 ]]; then
+		printf "Cannot find GIT project [%s]\n" "${FOLDER_TO_INSPECT_RESOLVED_PATH}"
+		continue
+	fi
+	if [[ ! -d "${FOLDER_TO_INSPECT_RESOLVED_PATH}" ]]; then
+		printf "[%s] is not a folder%s\n"
+		continue
+	fi
+	if [[ ! -d "${FOLDER_TO_INSPECT_RESOLVED_PATH}/.git" ]]; then
+		printf "[%s] is not a GIT repository\n" "${FOLDER_TO_INSPECT_RESOLVED_PATH}"
+		continue
+	fi
+	GIT_REPO_DIR_ARRAY+=( "${FOLDER_TO_INSPECT_RESOLVED_PATH}" )
+done
 
 GIT_BRANCH_LINE_REGEX="^( |\*)[[:space:]]+([[:alnum:]-]+)[[:space:]]+([[:alnum:]]+)[[:space:]]+\[(.+)\][[:space:]]+(.*)$"
 
 for GIT_REPO_DIR in "${GIT_REPO_DIR_ARRAY[@]}"; do
-	cd "${CURRENT_WORKING_DIRECTORY}"
-	
-	if [[ ! -d "${GIT_REPO_DIR}" ]]; then
-		#printf " Cannot find directory\n"
-		continue
-	fi
-	
-	if [[ ! -d "${GIT_REPO_DIR}/.git" ]]; then
-		#printf " Not a GIT repository\n"
-		continue
-	fi
-	
 	cd "${GIT_REPO_DIR}"
+	
+	GIT_REPO_NAME=$(basename "${GIT_REPO_DIR}")
 	
 	# Retrieve current branch
 	#CURRENT_LOCAL_BRANCH=$(git branch --show-current 2>/dev/null)
@@ -96,7 +110,6 @@ for GIT_REPO_DIR in "${GIT_REPO_DIR_ARRAY[@]}"; do
 		continue
 	fi
 	
-	GIT_REPO_NAME=$(basename "${GIT_REPO_DIR}")
 	GIT_REPO_PENDING_CHANGES=""
 	if [[ "${PENDING_CHANGE_COUNT}" -ne 0 ]]; then
 		GIT_REPO_PENDING_CHANGES=" !! ${PENDING_CHANGE_COUNT} pending change(s)"
