@@ -6,7 +6,7 @@ Quick and not-so-dirty bash script to show the status of multiple GIT projects i
 
 ~~~
 Usage: git_sup [OPTION]... [GIT_PROJECT_FOLDER...]
-Show status of GIT projects given in arguments or of all projects found in the current directory when no argument are specified.
+Show status of GIT projects given in arguments or of all projects found in the current directory when no argument is specified.
 
   -f PERFORM_GIT_FETCH
 ~~~
