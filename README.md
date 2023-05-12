@@ -1,10 +1,13 @@
 # git_sup
 
+Quick and not-so-dirty bash script to show the status of multiple GIT projects in one command and a concise maneer.  
+It is only based on git commands and in particular it parses the output of `git branch`.
+
 ## Usage
 
 ~~~
 Usage: git_sup [OPTION]... [GIT_PROJECT_FOLDER...]
-Show statuses of GIT projects given in arguments or all projects found in the current directory when no argument specified.
+Show status of GIT projects given in arguments or of all projects found in the current directory when no argument specified.
 
   -f PERFORM_GIT_FETCH
 ~~~
