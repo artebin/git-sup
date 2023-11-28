@@ -88,7 +88,7 @@ for FOLDER_TO_INSPECT in "${FOLDER_TO_INSPECT_ARRAY[@]}"; do
 	GIT_REPO_DIR_ARRAY+=( "${FOLDER_TO_INSPECT_RESOLVED_PATH}" )
 done
 
-GIT_BRANCH_LINE_REGEX="^( |\*)[[:space:]]+([[:alnum:]-]+)[[:space:]]+([[:alnum:]]+)[[:space:]]+\[(.+)\][[:space:]]+(.*)$"
+GIT_BRANCH_LINE_REGEX="^( |\*)[[:space:]]+(.+)[[:space:]]+(.+)[[:space:]]+\[(.+)\][[:space:]]+(.+)$"
 
 for GIT_REPO_DIR in "${GIT_REPO_DIR_ARRAY[@]}"; do
 	cd "${GIT_REPO_DIR}"
@@ -114,7 +114,7 @@ for GIT_REPO_DIR in "${GIT_REPO_DIR_ARRAY[@]}"; do
 	if [[ "${PENDING_CHANGE_COUNT}" -ne 0 ]]; then
 		GIT_REPO_PENDING_CHANGES=" !! ${PENDING_CHANGE_COUNT} pending change(s)"
 	fi
-	printf "\U1F5C0 ${GREEN}%s${NORMAL}%s\n" "${GIT_REPO_NAME}" "${GIT_REPO_PENDING_CHANGES}"
+	printf "\\u2AF8 ${GREEN}%s${NORMAL}%s\n" "${GIT_REPO_NAME}" "${GIT_REPO_PENDING_CHANGES}"
 	
 	# GIT fetch
 	if ${RUN_FETCH_ON_GIT_REPO}; then
@@ -126,9 +126,9 @@ for GIT_REPO_DIR in "${GIT_REPO_DIR_ARRAY[@]}"; do
 	fi
 	
 	GIT_BRANCH=$(git branch -vv)
-	while IFS= read -r LINE; do
-		if [[ ! "${LINE}" =~ ${GIT_BRANCH_LINE_REGEX} ]]; then
-			printf "! GIT_BRANCH line is not well formed\n"
+	while IFS= read -r GIT_BRANCH_LINE; do
+		if [[ ! "${GIT_BRANCH_LINE}" =~ ${GIT_BRANCH_LINE_REGEX} ]]; then
+			printf "!ERROR! GIT_BRANCH_LINE line is not well formed: %s\n\n\n\n\n" "${GIT_BRANCH_LINE}"
 			break
 		fi
 		
@@ -137,7 +137,7 @@ for GIT_REPO_DIR in "${GIT_REPO_DIR_ARRAY[@]}"; do
 		GIT_BRANCH_LINE_UPSTREAM="${BASH_REMATCH[4]}"
 		
 		if [[ "${CURRENT_LOCAL_BRANCH}" == '*' ]]; then
-			printf "   %s %s ↪ ${BLUE}%s${NORMAL}\n" "${GIT_BRANCH_LINE_IS_CURRENT_BRANCH}" "${GIT_BRANCH_LINE_BRANCH_NAME}" "${GIT_BRANCH_LINE_UPSTREAM}"
+			printf "   %s %s \\u21AA ${BLUE}%s${NORMAL}\n" "${GIT_BRANCH_LINE_IS_CURRENT_BRANCH}" "${GIT_BRANCH_LINE_BRANCH_NAME}" "${GIT_BRANCH_LINE_UPSTREAM}"
 		else
 			printf "   %s ${YELLOW}%s${NORMAL} ↪ ${BLUE}%s${NORMAL}\n" "${GIT_BRANCH_LINE_IS_CURRENT_BRANCH}" "${GIT_BRANCH_LINE_BRANCH_NAME}" "${GIT_BRANCH_LINE_UPSTREAM}"
 		fi
