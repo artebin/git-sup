@@ -5,7 +5,8 @@ print_usage(){
 Usage: $(basename ${BASH_SOURCE}) [OPTION]... [GIT_PROJECT_FOLDER...]
 Show statuses of GIT projects given in arguments or all projects found in the current directory when no argument specified.
 
-  -f PERFORM_GIT_FETCH
+Options:
+  -f	Perform git fetch.
 
 EOF
 }
@@ -26,6 +27,7 @@ NORMAL=$(tput sgr0)
 BLINK=$(tput blink)
 REVERSE=$(tput smso)
 UNDERLINE=$(tput smul)
+BOLD=$(tput bold)
 
 CURRENT_WORKING_DIRECTORY="$(pwd)"
 trap "cd '${CURRENT_WORKING_DIRECTORY}'" 0
@@ -96,6 +98,7 @@ for GIT_REPO_DIR in "${GIT_REPO_DIR_ARRAY[@]}"; do
 	GIT_REPO_NAME=$(basename "${GIT_REPO_DIR}")
 	
 	# Retrieve current branch
+	# `--show-current` parameter of `git branch` has been added in git v2.22 so we use `git rev-parse` instead.
 	#CURRENT_LOCAL_BRANCH=$(git branch --show-current 2>/dev/null)
 	CURRENT_LOCAL_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
 	if [[ "${?}" -ne 0 ]]; then
@@ -114,7 +117,7 @@ for GIT_REPO_DIR in "${GIT_REPO_DIR_ARRAY[@]}"; do
 	if [[ "${PENDING_CHANGE_COUNT}" -ne 0 ]]; then
 		GIT_REPO_PENDING_CHANGES=" !! ${PENDING_CHANGE_COUNT} pending change(s)"
 	fi
-	printf "\\u2AF8 ${GREEN}%s${NORMAL}%s\n" "${GIT_REPO_NAME}" "${GIT_REPO_PENDING_CHANGES}"
+	printf "${GREEN}\\u23FA %s${NORMAL}%s\n" "${GIT_REPO_NAME}" "${GIT_REPO_PENDING_CHANGES}"
 	
 	# GIT fetch
 	if ${RUN_FETCH_ON_GIT_REPO}; then
@@ -137,9 +140,9 @@ for GIT_REPO_DIR in "${GIT_REPO_DIR_ARRAY[@]}"; do
 		GIT_BRANCH_LINE_UPSTREAM="${BASH_REMATCH[4]}"
 		
 		if [[ "${CURRENT_LOCAL_BRANCH}" == '*' ]]; then
-			printf "   %s %s \\u21AA ${BLUE}%s${NORMAL}\n" "${GIT_BRANCH_LINE_IS_CURRENT_BRANCH}" "${GIT_BRANCH_LINE_BRANCH_NAME}" "${GIT_BRANCH_LINE_UPSTREAM}"
+			printf "   %s %s \\u279C ${BLUE}%s${NORMAL}\n" "${GIT_BRANCH_LINE_IS_CURRENT_BRANCH}" "${GIT_BRANCH_LINE_BRANCH_NAME}" "${GIT_BRANCH_LINE_UPSTREAM}"
 		else
-			printf "   %s ${YELLOW}%s${NORMAL} ↪ ${BLUE}%s${NORMAL}\n" "${GIT_BRANCH_LINE_IS_CURRENT_BRANCH}" "${GIT_BRANCH_LINE_BRANCH_NAME}" "${GIT_BRANCH_LINE_UPSTREAM}"
+			printf "   %s ${YELLOW}%s${NORMAL} \\u279C ${BLUE}%s${NORMAL}\n" "${GIT_BRANCH_LINE_IS_CURRENT_BRANCH}" "${GIT_BRANCH_LINE_BRANCH_NAME}" "${GIT_BRANCH_LINE_UPSTREAM}"
 		fi
 	done <<< "${GIT_BRANCH}"
 	
