@@ -3,7 +3,7 @@
 print_usage(){
 	cat << EOF
 Usage: $(basename ${BASH_SOURCE}) [OPTION]... [GIT_PROJECT_FOLDER...]
-Show statuses of GIT projects given in arguments or all projects found in the current directory when no argument specified.
+Show statuses of Git projects given in arguments or all projects found in the current directory when no argument specified.
 
 Options:
   -f	Perform git fetch.
@@ -33,7 +33,8 @@ CURRENT_WORKING_DIRECTORY="$(pwd)"
 trap "cd '${CURRENT_WORKING_DIRECTORY}'" 0
 
 RUN_FETCH_ON_GIT_REPO="false"
-while getopts "fh" ARG; do
+DEBUG="false"
+while getopts "hfd" ARG; do
 	case "${ARG}" in
 		h)
 			print_usage
@@ -41,6 +42,9 @@ while getopts "fh" ARG; do
 			;;
 		f)
 			RUN_FETCH_ON_GIT_REPO="true"
+			;;
+		d)
+			DEBUG="true"
 			;;
 		*)
 			printf "Unknown option: %s\n" "${OPTARG}" 1>&2
@@ -76,7 +80,7 @@ GIT_REPO_DIR_ARRAY=()
 for FOLDER_TO_INSPECT in "${FOLDER_TO_INSPECT_ARRAY[@]}"; do
 	FOLDER_TO_INSPECT_RESOLVED_PATH=$(readlink -e "${FOLDER_TO_INSPECT}")
 	if [[ "${?}" != 0 ]]; then
-		printf "Cannot find GIT project [%s]\n" "${FOLDER_TO_INSPECT_RESOLVED_PATH}"
+		printf "Cannot find Git project [%s]\n" "${FOLDER_TO_INSPECT_RESOLVED_PATH}"
 		continue
 	fi
 	if [[ ! -d "${FOLDER_TO_INSPECT_RESOLVED_PATH}" ]]; then
@@ -84,7 +88,7 @@ for FOLDER_TO_INSPECT in "${FOLDER_TO_INSPECT_ARRAY[@]}"; do
 		continue
 	fi
 	if [[ ! -d "${FOLDER_TO_INSPECT_RESOLVED_PATH}/.git" ]]; then
-		printf "[%s] is not a GIT repository\n" "${FOLDER_TO_INSPECT_RESOLVED_PATH}"
+		printf "[%s] is not a Git repository\n" "${FOLDER_TO_INSPECT_RESOLVED_PATH}"
 		continue
 	fi
 	GIT_REPO_DIR_ARRAY+=( "${FOLDER_TO_INSPECT_RESOLVED_PATH}" )
@@ -98,7 +102,7 @@ for GIT_REPO_DIR in "${GIT_REPO_DIR_ARRAY[@]}"; do
 	GIT_REPO_NAME=$(basename "${GIT_REPO_DIR}")
 	
 	# Retrieve current branch
-	# `--show-current` parameter of `git branch` has been added in git v2.22 so we use `git rev-parse` instead.
+	# `--show-current` parameter of `git branch` has been added in Git v2.22 so we use `git rev-parse` instead.
 	#CURRENT_LOCAL_BRANCH=$(git branch --show-current 2>/dev/null)
 	CURRENT_LOCAL_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
 	if [[ "${?}" -ne 0 ]]; then
@@ -131,8 +135,12 @@ for GIT_REPO_DIR in "${GIT_REPO_DIR_ARRAY[@]}"; do
 	GIT_BRANCH=$(git branch -vv)
 	while IFS= read -r GIT_BRANCH_LINE; do
 		if [[ ! "${GIT_BRANCH_LINE}" =~ ${GIT_BRANCH_LINE_REGEX} ]]; then
-			printf "!ERROR! GIT_BRANCH_LINE line is not well formed: %s\n\n\n\n\n" "${GIT_BRANCH_LINE}"
+			printf "!ERROR! GIT_BRANCH_LINE is not well formed [%s]\n" "${GIT_BRANCH_LINE}"
 			break
+		fi
+		
+		if ${DEBUG}; then
+			printf "GIT_BRANCH_LINE[%s]\n" "${GIT_BRANCH_LINE}"
 		fi
 		
 		GIT_BRANCH_LINE_IS_CURRENT_BRANCH="${BASH_REMATCH[1]}"
