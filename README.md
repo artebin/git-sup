@@ -1,6 +1,6 @@
 # git-sup
 
-Quick and not-so-dirty bash script to show the status of multiple GIT projects in one command and concise manner. It is based on git commands and in particular it parses the output of `git branch`.
+Quick and not-so-dirty bash script to show the status of multiple Git projects in one command and concise manner. It is based on git commands and in particular it parses the output of `git branch`.
 
 ## Usage
 
