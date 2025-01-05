@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
 print_usage(){
-	cat << EOF
-Usage: $(basename ${BASH_SOURCE}) [OPTION]... [GIT_PROJECT_FOLDER...]
-Show statuses of Git projects given in arguments or all projects found in the current directory when no argument specified.
+	cat << 'EOF'
+Usage: $(basename ${BASH_SOURCE}) [OPTIONS]... [GIT_PROJECT_FOLDER...]
+Show statuses of Git repositories given in arguments or of all repoitories found in the current directory when no argument specified.
 
 Options:
   -f	Perform git fetch.
@@ -94,7 +94,8 @@ for FOLDER_TO_INSPECT in "${FOLDER_TO_INSPECT_ARRAY[@]}"; do
 	GIT_REPO_DIR_ARRAY+=( "${FOLDER_TO_INSPECT_RESOLVED_PATH}" )
 done
 
-GIT_BRANCH_LINE_REGEX="^( |\*)[[:space:]]+(.+)[[:space:]]+(.+)[[:space:]]+\[(.+)\][[:space:]]+(.+)$"
+# (?<IsCurrentBranch> |\*)[[:space:]]+(?<UpstreamBranchName>.+)[[:space:]]+\[(?<Hash>.+)\][[:space:]]+(?<CommitMessage>.+)
+GIT_BRANCH_LINE_REGEX="^( |\*)[[:space:]]+(.+)[[:space:]]+\[(.+)\][[:space:]]+(.+)$"
 
 for GIT_REPO_DIR in "${GIT_REPO_DIR_ARRAY[@]}"; do
 	cd "${GIT_REPO_DIR}"
