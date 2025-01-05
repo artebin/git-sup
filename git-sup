@@ -95,6 +95,7 @@ for FOLDER_TO_INSPECT in "${FOLDER_TO_INSPECT_ARRAY[@]}"; do
 done
 
 # (?<IsCurrentBranch> |\*)[[:space:]]+(?<UpstreamBranchName>.+)[[:space:]]+\[(?<Hash>.+)\][[:space:]]+(?<CommitMessage>.+)
+# TODO: should support no upstream.
 GIT_BRANCH_LINE_REGEX="^( |\*)[[:space:]]+(.+)[[:space:]]+\[(.+)\][[:space:]]+(.+)$"
 
 for GIT_REPO_DIR in "${GIT_REPO_DIR_ARRAY[@]}"; do
