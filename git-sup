@@ -88,15 +88,16 @@ for FOLDER_TO_INSPECT in "${FOLDER_TO_INSPECT_ARRAY[@]}"; do
 		continue
 	fi
 	if [[ ! -d "${FOLDER_TO_INSPECT_RESOLVED_PATH}/.git" ]]; then
-		printf "[%s] is not a Git repository\n" "${FOLDER_TO_INSPECT_RESOLVED_PATH}"
+		#printf "[%s] is not a Git repository\n" "${FOLDER_TO_INSPECT_RESOLVED_PATH}"
 		continue
 	fi
 	GIT_REPO_DIR_ARRAY+=( "${FOLDER_TO_INSPECT_RESOLVED_PATH}" )
 done
 
-# (?<IsCurrentBranch> |\*)[[:space:]]+(?<UpstreamBranchName>.+)[[:space:]]+\[(?<Hash>.+)\][[:space:]]+(?<CommitMessage>.+)
-# TODO: should support no upstream.
-GIT_BRANCH_LINE_REGEX="^( |\*)[[:space:]]+(.+)[[:space:]]+\[(.+)\][[:space:]]+(.+)$"
+# We will git branch format: %(HEAD) %(refname:short) %(push:track) %(objectname:short) %(contents:subject) %(upstream:short)
+STX=$'\002'
+ETX=$'\003'
+GIT_BRANCH_LINE_REGEX="^${STX}( |\*)${ETX}${STX}(.*)${ETX}${STX}(.*)${ETX}${STX}(.*)${ETX}${STX}(.*)${ETX}${STX}(.*)${ETX}$"
 
 for GIT_REPO_DIR in "${GIT_REPO_DIR_ARRAY[@]}"; do
 	cd "${GIT_REPO_DIR}"
@@ -134,7 +135,7 @@ for GIT_REPO_DIR in "${GIT_REPO_DIR_ARRAY[@]}"; do
 		fi
 	fi
 	
-	GIT_BRANCH=$(git branch -vv)
+	GIT_BRANCH=$(git branch --list --format "%02%(HEAD)%03%02%(refname:short)%03%02%(push:track)%03%02%(objectname:short)%03%02%(contents:subject)%03%02%(upstream:short)%03")
 	while IFS= read -r GIT_BRANCH_LINE; do
 		if [[ ! "${GIT_BRANCH_LINE}" =~ ${GIT_BRANCH_LINE_REGEX} ]]; then
 			printf "!ERROR! GIT_BRANCH_LINE is not well formed [%s]\n" "${GIT_BRANCH_LINE}"
@@ -145,14 +146,20 @@ for GIT_REPO_DIR in "${GIT_REPO_DIR_ARRAY[@]}"; do
 			printf "GIT_BRANCH_LINE[%s]\n" "${GIT_BRANCH_LINE}"
 		fi
 		
-		GIT_BRANCH_LINE_IS_CURRENT_BRANCH="${BASH_REMATCH[1]}"
-		GIT_BRANCH_LINE_BRANCH_NAME="${BASH_REMATCH[2]}"
-		GIT_BRANCH_LINE_UPSTREAM="${BASH_REMATCH[4]}"
+		GIT_BRANCH_LINE_IS_HEAD="${BASH_REMATCH[1]}"
+		GIT_BRANCH_LINE_REF_NAME="${BASH_REMATCH[2]}"
+		GIT_BRANCH_LINE_PUSH_TRACK="${BASH_REMATCH[3]}"
+		if [[ ! -z "${GIT_BRANCH_LINE_PUSH_TRACK}" ]]; then
+			GIT_BRANCH_LINE_PUSH_TRACK=" ${GIT_BRANCH_LINE_PUSH_TRACK}"
+		fi
+		GIT_BRANCH_LINE_OBJECT_NAME="${BASH_REMATCH[4]}"
+		GIT_BRANCH_LINE_CONTENTS="${BASH_REMATCH[5]}"
+		GIT_BRANCH_LINE_UPSTREAM="${BASH_REMATCH[6]}"
 		
-		if [[ "${CURRENT_LOCAL_BRANCH}" == '*' ]]; then
-			printf "   %s %s \\u279C ${BLUE}%s${NORMAL}\n" "${GIT_BRANCH_LINE_IS_CURRENT_BRANCH}" "${GIT_BRANCH_LINE_BRANCH_NAME}" "${GIT_BRANCH_LINE_UPSTREAM}"
+		if [[ "${CURRENT_LOCAL_BRANCH}" != "${GIT_BRANCH_LINE_REF_NAME}" ]]; then
+			printf "   %s %s%s \\u279C ${BLUE}%s${NORMAL}\n" "${GIT_BRANCH_LINE_IS_HEAD}" "${GIT_BRANCH_LINE_REF_NAME}" "${GIT_BRANCH_LINE_PUSH_TRACK}" "${GIT_BRANCH_LINE_UPSTREAM}"
 		else
-			printf "   %s ${YELLOW}%s${NORMAL} \\u279C ${BLUE}%s${NORMAL}\n" "${GIT_BRANCH_LINE_IS_CURRENT_BRANCH}" "${GIT_BRANCH_LINE_BRANCH_NAME}" "${GIT_BRANCH_LINE_UPSTREAM}"
+			printf "   %s ${GREEN}%s${NORMAL}%s \\u279C ${BLUE}%s${NORMAL}\n" "${GIT_BRANCH_LINE_IS_HEAD}" "${GIT_BRANCH_LINE_REF_NAME}" "${GIT_BRANCH_LINE_PUSH_TRACK}" "${GIT_BRANCH_LINE_UPSTREAM}"
 		fi
 	done <<< "${GIT_BRANCH}"
 	
