@@ -1,5 +1,0 @@
-# TODOS
-
-  - [ ] Better indicator for "behind N".
-  - [ ] indicate if a remote branch has been deleted.
-  - [ ] Use `git for-each-ref` <https://stackoverflow.com/questions/38624567/git-branch-output-without-indent-whitespace-besides-regex-manipulation>, something like `git branch --format "%(HEAD) %(refname:short) %(upstream:remoteref)"`.
