@@ -6,7 +6,7 @@ projects concise manner.
 ## Usage
 
 ~~~
-Usage: $(basename ${BASH_SOURCE}) [OPTIONS]... [GIT_PROJECT_FOLDER...]
+Usage: git-sup [OPTIONS] [GIT_PROJECT_FOLDER ...]
 Show statuses of Git repositories given in arguments or of all 
 repoitories found in the current directory when no argument specified.
 
