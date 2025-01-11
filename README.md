@@ -6,11 +6,13 @@ projects concise manner.
 ## Usage
 
 ~~~
-Usage: git-sup [OPTIONS] [GIT_PROJECT_FOLDER ...]
-Show status of GIT projects given in arguments or of all projects found 
-in the current directory when no argument is specified.
+Usage: $(basename ${BASH_SOURCE}) [OPTIONS]... [GIT_PROJECT_FOLDER...]
+Show statuses of Git repositories given in arguments or of all 
+repoitories found in the current directory when no argument specified.
 
-  -f PERFORM_GIT_FETCH
+Options:
+  -f	Perform git fetch.
+
 ~~~
 
 ## Example
