@@ -1,11 +1,11 @@
 # git-sup
 
-Quick and not-so-dirty bash script to show the status of multiple Git projects in one command and concise manner. It is based on git commands and in particular it parses the output of `git branch`.
+Quick and not-so-dirty bash script to show the status of multiple Git projects concise manner.
 
 ## Usage
 
 ~~~
-Usage: git-sup [OPTION]... [GIT_PROJECT_FOLDER...]
+Usage: git-sup [OPTIONS] [GIT_PROJECT_FOLDER ...]
 Show status of GIT projects given in arguments or of all projects found in the current directory when no argument is specified.
 
   -f PERFORM_GIT_FETCH
@@ -15,30 +15,30 @@ Show status of GIT projects given in arguments or of all projects found in the c
 
 ~~~
 njames@rollin:MyProjects$ git-sup -f
-🗀 felix !! 2 pending change(s)
-   * master ↪ origin/master: behind 14
+⏺ boo
+   * main ➜ origin/main
 
-🗀 felix-archives
-   * master ↪ origin/master
+⏺ felix !! 2 pending change(s)
+   * master [behind 1] ➜ origin/master
 
-🗀 felix-themes
-   * main ↪ origin/main
+⏺ felix-themes
+   * main ➜ origin/main
 
-🗀 git_sup !! 1 pending change(s)
-   * main ↪ origin/main
+⏺ git-sup
+   * main ➜ origin/main
 
-🗀 MyConfig
-   * master ↪ origin/master
+⏺ MyCurriculumVitae
+   * master ➜ origin/master
 
-🗀 MyCurriculumVitae
-   * master ↪ origin/master
+⏺ MyDocumentation
+   * master ➜ origin/master
 
-🗀 MyDocumentation
-   * master ↪ origin/master: behind 3
+⏺ MyMurtaugh !! 1 pending change(s)
+   * master ➜ origin/master
 
-🗀 MyMurtaugh
-   * master ↪ origin/master: behind 4
+⏺ MyWorkshop !! 53 pending change(s)
+   * main ➜ origin/main
 
-🗀 SpectralSorcery
-   * main ↪ origin/main
+⏺ rififi
+   * main [behind 1] ➜ origin/main
 ~~~
