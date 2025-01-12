@@ -2,9 +2,9 @@
 
 print_usage(){
 	cat << EOF
-Usage: $(basename ${BASH_SOURCE}) [OPTIONS] [GIT_PROJECT_FOLDER ...]
+Usage: $(basename ${BASH_SOURCE}) [OPTIONS] [GIT_REPOSITORY ...]
 Show statuses of Git repositories given in arguments or of all 
-repoitories found in the current directory when no argument specified.
+repositories found in the current directory when no argument specified.
 
 Options:
   -f	Perform git fetch.
@@ -35,7 +35,7 @@ trap "cd '${CURRENT_WORKING_DIRECTORY}'" 0
 
 RUN_FETCH_ON_GIT_REPO="false"
 DEBUG="false"
-while getopts "hfd" ARG; do
+while getopts ":hfd" ARG; do
 	case "${ARG}" in
 		h)
 			print_usage
@@ -48,7 +48,7 @@ while getopts "hfd" ARG; do
 			DEBUG="true"
 			;;
 		*)
-			printf "Unknown option: %s\n" "${OPTARG}" 1>&2
+			printf "Unknown option: -%s\n\n" "${OPTARG}"
 			print_usage
 			exit 1
 			;;
@@ -56,58 +56,68 @@ while getopts "hfd" ARG; do
 done
 shift $((OPTIND-1))
 
-# Collect folders to inspect
-FOLDER_TO_INSPECT_ARRAY=()
-if [[ "${#}" -eq 0 ]]; then
-	# Check if CWD is already a GIT project then we add the parent folder only
-	if [[ -d ".git" ]]; then
-		FOLDER_TO_INSPECT_ARRAY+=( "." )
+############################
+# Collect Git repositories
+############################
+GIT_REPOSITORY_ARRAY=()
+
+# Add explicit arguments
+if [[ "${#}" -ne 0 ]]; then
+	for GIT_REPOSITORY in "${@}"; do
+		GIT_REPOSITORY=$(readlink -e "${GIT_REPOSITORY}")
+		if [[ "${?}" != 0 ]]; then
+			printf "!ERROR! Cannot find Git repository at [%s]\n" "${GIT_REPOSITORY}"
+			continue
+		fi
+		if [[ ! -d "${GIT_REPOSITORY}" ]]; then
+			printf "!ERROR! Cannot find Git repository at [%s]\n" "${GIT_REPOSITORY}"
+			continue
+		fi
+		if [[ ! -d "${GIT_REPOSITORY}/.git" ]]; then
+			printf "!ERROR! Cannot find Git repository at [%s]\n" "${GIT_REPOSITORY}"
+			continue
+		fi
+		GIT_REPOSITORY_ARRAY+=( "${GIT_REPOSITORY}" )
+	done
+else
+	# Search for a Git repository in CWD
+	GIT_REPOSITORY_TOPLEVEL=$(git rev-parse --show-toplevel 2>/dev/null)
+	if [[ "${?}" == 0 ]]; then
+		GIT_REPOSITORY_ARRAY+=( "${GIT_REPOSITORY_TOPLEVEL}" )
 	else
 		for FOLDER in *; do
+			FOLDER=$(readlink -e "${FOLDER}")
+			if [[ "${?}" != 0 ]]; then
+				# Cannot retrieve absolute path for FOLDER, this should not happen here
+				continue
+			fi
 			if [[ ! -d "${FOLDER}" ]]; then
 				continue
 			fi
-			FOLDER_TO_INSPECT_ARRAY+=( "${FOLDER}" )
+			if [[ ! -d "${FOLDER}/.git" ]]; then
+				continue
+			fi
+			GIT_REPOSITORY_ARRAY+=( "${FOLDER}" )
 		done
 	fi
-else
-	for FOLDER in "${@}"; do
-		FOLDER_TO_INSPECT_ARRAY+=( "${FOLDER}" )
-	done
 fi
 
-# Filter GIT repositories
-GIT_REPO_DIR_ARRAY=()
-for FOLDER_TO_INSPECT in "${FOLDER_TO_INSPECT_ARRAY[@]}"; do
-	FOLDER_TO_INSPECT_RESOLVED_PATH=$(readlink -e "${FOLDER_TO_INSPECT}")
-	if [[ "${?}" != 0 ]]; then
-		printf "Cannot find Git project [%s]\n" "${FOLDER_TO_INSPECT_RESOLVED_PATH}"
-		continue
-	fi
-	if [[ ! -d "${FOLDER_TO_INSPECT_RESOLVED_PATH}" ]]; then
-		printf "[%s] is not a folder%s\n"
-		continue
-	fi
-	if [[ ! -d "${FOLDER_TO_INSPECT_RESOLVED_PATH}/.git" ]]; then
-		#printf "[%s] is not a Git repository\n" "${FOLDER_TO_INSPECT_RESOLVED_PATH}"
-		continue
-	fi
-	GIT_REPO_DIR_ARRAY+=( "${FOLDER_TO_INSPECT_RESOLVED_PATH}" )
-done
+###########################
+# Process each repository
+###########################
 
-# We will git branch format: %(HEAD) %(refname:short) %(push:track) %(objectname:short) %(contents:subject) %(upstream:short)
+# We use git branch format: %(HEAD) %(refname:short) %(push:track) %(objectname:short) %(contents:subject) %(upstream:short)
+# With STX/ETX characters around each field for easy parsing.
 STX=$'\002'
 ETX=$'\003'
 GIT_BRANCH_LINE_REGEX="^${STX}( |\*)${ETX}${STX}(.*)${ETX}${STX}(.*)${ETX}${STX}(.*)${ETX}${STX}(.*)${ETX}${STX}(.*)${ETX}$"
 
-for GIT_REPO_DIR in "${GIT_REPO_DIR_ARRAY[@]}"; do
-	cd "${GIT_REPO_DIR}"
+for GIT_REPOSITORY in "${GIT_REPOSITORY_ARRAY[@]}"; do
+	cd "${GIT_REPOSITORY}"
 	
-	GIT_REPO_NAME=$(basename "${GIT_REPO_DIR}")
+	GIT_REPO_NAME=$(basename "${GIT_REPOSITORY}")
 	
 	# Retrieve current branch
-	# `--show-current` parameter of `git branch` has been added in Git v2.22 so we use `git rev-parse` instead.
-	#CURRENT_LOCAL_BRANCH=$(git branch --show-current 2>/dev/null)
 	CURRENT_LOCAL_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
 	if [[ "${?}" -ne 0 ]]; then
 		printf " Cannot retrieve local current branch\n"
