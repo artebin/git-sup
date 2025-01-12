@@ -125,17 +125,17 @@ for GIT_REPOSITORY in "${GIT_REPOSITORY_ARRAY[@]}"; do
 	fi
 	
 	# Retrieve local changes count
-	PENDING_CHANGE_COUNT=$(git status --porcelain | wc -l 2>&1)
+	LOCAL_CHANGE_COUNT=$(git status --porcelain | wc -l 2>&1)
 	if [[ "${?}" -ne 0 ]]; then
 		printf "  Something went wrong while checking for local changes\n"
 		continue
 	fi
 	
-	GIT_REPO_PENDING_CHANGES=""
-	if [[ "${PENDING_CHANGE_COUNT}" -ne 0 ]]; then
-		GIT_REPO_PENDING_CHANGES=" !! ${PENDING_CHANGE_COUNT} pending change(s)"
+	GIT_REPOSITORY_LOCAL_CHANGES=""
+	if [[ "${LOCAL_CHANGE_COUNT}" -ne 0 ]]; then
+		GIT_REPOSITORY_LOCAL_CHANGES=" !! ${LOCAL_CHANGE_COUNT} local change(s)"
 	fi
-	printf "${GREEN}\\u23FA %s${NORMAL}%s\n" "${GIT_REPO_NAME}" "${GIT_REPO_PENDING_CHANGES}"
+	printf "${GREEN}\\u23FA %s${NORMAL}%s\n" "${GIT_REPO_NAME}" "${GIT_REPOSITORY_LOCAL_CHANGES}"
 	
 	# GIT fetch
 	if ${RUN_FETCH_ON_GIT_REPO}; then
