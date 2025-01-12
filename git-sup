@@ -115,19 +115,19 @@ GIT_BRANCH_LINE_REGEX="^${STX}( |\*)${ETX}${STX}(.*)${ETX}${STX}(.*)${ETX}${STX}
 for GIT_REPOSITORY in "${GIT_REPOSITORY_ARRAY[@]}"; do
 	cd "${GIT_REPOSITORY}"
 	
-	GIT_REPO_NAME=$(basename "${GIT_REPOSITORY}")
+	GIT_REPOSITORY_NAME=$(basename "${GIT_REPOSITORY}")
 	
 	# Retrieve current branch
-	CURRENT_LOCAL_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
+	LOCAL_CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
 	if [[ "${?}" -ne 0 ]]; then
-		printf " Cannot retrieve local current branch\n"
+		printf "!ERROR! Cannot retrieve local current branch in [%s]\n" "${GIT_REPOSITORY}"
 		continue
 	fi
 	
 	# Retrieve local changes count
 	LOCAL_CHANGE_COUNT=$(git status --porcelain | wc -l 2>&1)
 	if [[ "${?}" -ne 0 ]]; then
-		printf "  Something went wrong while checking for local changes\n"
+		printf "!ERROR! Something went wrong while checking for local changes in [%s]\n" "${GIT_REPOSITORY}"
 		continue
 	fi
 	
@@ -135,9 +135,9 @@ for GIT_REPOSITORY in "${GIT_REPOSITORY_ARRAY[@]}"; do
 	if [[ "${LOCAL_CHANGE_COUNT}" -ne 0 ]]; then
 		GIT_REPOSITORY_LOCAL_CHANGES=" !! ${LOCAL_CHANGE_COUNT} local change(s)"
 	fi
-	printf "${GREEN}\\u23FA %s${NORMAL}%s\n" "${GIT_REPO_NAME}" "${GIT_REPOSITORY_LOCAL_CHANGES}"
+	printf "${GREEN}\\u23FA %s${NORMAL}%s\n" "${GIT_REPOSITORY_NAME}" "${GIT_REPOSITORY_LOCAL_CHANGES}"
 	
-	# GIT fetch
+	# Run Git fetch
 	if ${RUN_FETCH_ON_GIT_REPO}; then
 		git fetch >/dev/null 2>/dev/null
 		if [[ "${?}" -ne 0 ]]; then
@@ -167,7 +167,7 @@ for GIT_REPOSITORY in "${GIT_REPOSITORY_ARRAY[@]}"; do
 		GIT_BRANCH_LINE_CONTENTS="${BASH_REMATCH[5]}"
 		GIT_BRANCH_LINE_UPSTREAM="${BASH_REMATCH[6]}"
 		
-		if [[ "${CURRENT_LOCAL_BRANCH}" != "${GIT_BRANCH_LINE_REF_NAME}" ]]; then
+		if [[ "${LOCAL_CURRENT_BRANCH}" != "${GIT_BRANCH_LINE_REF_NAME}" ]]; then
 			printf "   %s %s%s \\u279C ${BLUE}%s${NORMAL}\n" "${GIT_BRANCH_LINE_IS_HEAD}" "${GIT_BRANCH_LINE_REF_NAME}" "${GIT_BRANCH_LINE_PUSH_TRACK}" "${GIT_BRANCH_LINE_UPSTREAM}"
 		else
 			printf "   %s ${GREEN}%s${NORMAL}%s \\u279C ${BLUE}%s${NORMAL}\n" "${GIT_BRANCH_LINE_IS_HEAD}" "${GIT_BRANCH_LINE_REF_NAME}" "${GIT_BRANCH_LINE_PUSH_TRACK}" "${GIT_BRANCH_LINE_UPSTREAM}"
