@@ -1,7 +1,7 @@
 # git-sup
 
 Quick and not-so-dirty bash script to show the status of multiple Git 
-projects concise manner.
+repositories concise manner.
 
 ## Usage
 
