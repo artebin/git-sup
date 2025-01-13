@@ -34,8 +34,9 @@ CURRENT_WORKING_DIRECTORY="$(pwd)"
 trap "cd '${CURRENT_WORKING_DIRECTORY}'" 0
 
 RUN_FETCH_ON_GIT_REPO="false"
+VERBOSE="false"
 DEBUG="false"
-while getopts ":hfd" ARG; do
+while getopts ":hfvd" ARG; do
 	case "${ARG}" in
 		h)
 			print_usage
@@ -43,6 +44,9 @@ while getopts ":hfd" ARG; do
 			;;
 		f)
 			RUN_FETCH_ON_GIT_REPO="true"
+			;;
+		v)
+			VERBOSE="true"
 			;;
 		d)
 			DEBUG="true"
@@ -171,6 +175,22 @@ for GIT_REPOSITORY in "${GIT_REPOSITORY_ARRAY[@]}"; do
 			printf "   %s %s%s \\u279C ${BLUE}%s${NORMAL}\n" "${GIT_BRANCH_LINE_IS_HEAD}" "${GIT_BRANCH_LINE_REF_NAME}" "${GIT_BRANCH_LINE_PUSH_TRACK}" "${GIT_BRANCH_LINE_UPSTREAM}"
 		else
 			printf "   %s ${GREEN}%s${NORMAL}%s \\u279C ${BLUE}%s${NORMAL}\n" "${GIT_BRANCH_LINE_IS_HEAD}" "${GIT_BRANCH_LINE_REF_NAME}" "${GIT_BRANCH_LINE_PUSH_TRACK}" "${GIT_BRANCH_LINE_UPSTREAM}"
+			
+			if ${VERBOSE}; then
+				GIT_LOG_BEHIND="$(git log "${GIT_BRANCH_LINE_REF_NAME}".."${GIT_BRANCH_LINE_UPSTREAM}" --no-merges --pretty=format:"     %C(yellow)%h %Cblue%ad %Cgreen%<(7)%aN%Cred %Creset%s" --date=iso8601)"
+				if [[ ! -z "${GIT_LOG_BEHIND}" ]]; then
+					printf "     ↓↓\n%s" "${GIT_LOG_BEHIND}"
+				fi
+				
+				GIT_LOG_AHEAD="$(git log "${GIT_BRANCH_LINE_UPSTREAM}".."${GIT_BRANCH_LINE_REF_NAME}" --no-merges --pretty=format:"     %C(yellow)%h %Cblue%ad %Cgreen%<(7)%aN%Cred %Creset%s" --date=iso8601)"
+				if [[ ! -z "${GIT_LOG_AHEAD}" ]]; then
+					printf "     ↑↑%s\n" "${GIT_LOG_AHEAD}"
+				fi
+				
+				if [[ ! -z "${GIT_LOG_BEHIND}" ]] || [[ ! -z "${GIT_LOG_AHEAD}" ]]; then
+					printf "\n"
+				fi
+			fi
 		fi
 	done <<< "${GIT_BRANCH}"
 	
