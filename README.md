@@ -12,7 +12,7 @@ repoitories found in the current directory when no argument specified.
 
 Options:
   -f	Perform git fetch.
-
+  -v	Verbose mode: show git log for the commits behind/ahead.
 ~~~
 
 ## Example
