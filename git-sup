@@ -8,10 +8,10 @@ repositories found from the current working directory when no arguments
 are specified.
 
 Options:
-  -fF	Do not (f) or do run (F) git fetch.
+  -fF	Do not (f) or do (F) run git fetch.
 	Git fetch is not done by default.
 
-  -lL	Do not (l) or do show (L) git log for the commits behind/ahead.
+  -lL	Do not (l) or do (L) show git log for the commits behind/ahead.
 	Git logs are not showed by default.
 
 Git Config:
