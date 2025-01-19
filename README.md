@@ -1,14 +1,15 @@
 # git-sup
 
-Quick and not-so-dirty bash script to show the status of multiple Git 
+Quick and not-so-dirty bash script to show the statuses of multiple Git 
 repositories in a concise manner.
 
 ## Usage
 
 ~~~
-Usage: git-sup [OPTIONS] [GIT_PROJECT_FOLDER ...]
+Usage: git-sup [OPTION] [GIT_PROJECT_FOLDER]...
 Show statuses of Git repositories given in arguments or of all 
-repoitories found in the current directory when no argument specified.
+repositories found from the current working directory when no arguments 
+are specified.
 
 Options:
   -f	Perform git fetch.

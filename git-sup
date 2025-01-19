@@ -2,14 +2,21 @@
 
 print_usage(){
 	cat << EOF
-Usage: $(basename ${BASH_SOURCE}) [OPTIONS] [GIT_REPOSITORY ...]
+Usage: $(basename ${BASH_SOURCE}) [OPTION] [GIT_REPOSITORY]...
 Show statuses of Git repositories given in arguments or of all 
-repositories found in the current directory when no argument specified.
+repositories found from the current working directory when no arguments 
+are specified.
 
 Options:
-  -f	Perform git fetch.
-  -v	Verbose mode: show git log for the commits behind/ahead.
+  -fF	Do not (f) or do run (F) git fetch.
+	Git fetch is not done by default.
 
+  -lL	Do not (l) or do show (L) git log for the commits behind/ahead.
+	Git logs are not showed by default.
+
+Git Config:
+  gitsup.rungitfetch	true/false valued. Overriden by option -fF.
+  gitsup.showgitlog	true/false valued. Overriden by option -lL.
 EOF
 }
 
@@ -34,20 +41,38 @@ BOLD=$(tput bold)
 CURRENT_WORKING_DIRECTORY="$(pwd)"
 trap "cd '${CURRENT_WORKING_DIRECTORY}'" 0
 
-RUN_FETCH_ON_GIT_REPO="false"
-VERBOSE="false"
+# Try to retrieve RUN_GIT_FETCH from gitconfig
+RUN_GIT_FETCH="false"
+GITCONFIG_RUN_GIT_FETCH="$(git config "gitsup.rungitfetch")"
+if [[ "${GITCONFIG_RUN_GIT_FETCH}" == "true" ]]; then
+	RUN_GIT_FETCH="true"
+fi
+
+# Try to retrieve SHOW_GIT_LOG from gitconfig
+SHOW_GIT_LOG="false"
+GITCONFIG_SHOW_GIT_LOG="$(git config "gitsup.showgitlog")"
+if [[ "${GITCONFIG_SHOW_GIT_LOG}" == "true" ]]; then
+	SHOW_GIT_LOG="true"
+fi
+
 DEBUG="false"
-while getopts ":hfvd" ARG; do
+while getopts ":hfld" ARG; do
 	case "${ARG}" in
 		h)
 			print_usage
 			exit 0
 			;;
 		f)
-			RUN_FETCH_ON_GIT_REPO="true"
+			RUN_GIT_FETCH="false"
 			;;
-		v)
-			VERBOSE="true"
+		F)
+			RUN_GIT_FETCH="true"
+			;;
+		l)
+			SHOW_GIT_LOG="false"
+			;;
+		L)
+			SHOW_GIT_LOG="true"
 			;;
 		d)
 			DEBUG="true"
@@ -143,7 +168,7 @@ for GIT_REPOSITORY in "${GIT_REPOSITORY_ARRAY[@]}"; do
 	printf "${GREEN}\\u23FA %s${NORMAL}%s\n" "${GIT_REPOSITORY_NAME}" "${GIT_REPOSITORY_LOCAL_CHANGES}"
 	
 	# Run Git fetch
-	if ${RUN_FETCH_ON_GIT_REPO}; then
+	if ${RUN_GIT_FETCH}; then
 		git fetch >/dev/null 2>/dev/null
 		if [[ "${?}" -ne 0 ]]; then
 			printf " Something went wrong during git fetch\n"
@@ -177,7 +202,7 @@ for GIT_REPOSITORY in "${GIT_REPOSITORY_ARRAY[@]}"; do
 		else
 			printf "   %s ${GREEN}%s${NORMAL}%s \\u279C ${BLUE}%s${NORMAL}\n" "${GIT_BRANCH_LINE_IS_HEAD}" "${GIT_BRANCH_LINE_REF_NAME}" "${GIT_BRANCH_LINE_PUSH_TRACK}" "${GIT_BRANCH_LINE_UPSTREAM}"
 			
-			if ${VERBOSE}; then
+			if ${SHOW_GIT_LOG}; then
 				GIT_LOG_BEHIND="$(git log "${GIT_BRANCH_LINE_REF_NAME}".."${GIT_BRANCH_LINE_UPSTREAM}" --no-merges --pretty=format:"     %C(yellow)%h %Cblue%ad %Cgreen%<(7)%aN%Cred %Creset%s" --date=iso8601)"
 				if [[ ! -z "${GIT_LOG_BEHIND}" ]]; then
 					printf "     ↓↓\n%s\n" "${GIT_LOG_BEHIND}"
