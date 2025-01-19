@@ -6,7 +6,7 @@ repositories in a concise manner.
 ## Usage
 
 ~~~
-Usage: $(basename ${BASH_SOURCE}) [OPTION] [GIT_REPOSITORY]...
+Usage: git-sup [OPTION] [GIT_REPOSITORY]...
 Show statuses of Git repositories given in arguments or of all 
 repositories found from the current working directory when no arguments 
 are specified.
