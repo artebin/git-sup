@@ -6,14 +6,21 @@ repositories in a concise manner.
 ## Usage
 
 ~~~
-Usage: git-sup [OPTION] [GIT_PROJECT_FOLDER]...
+Usage: $(basename ${BASH_SOURCE}) [OPTION] [GIT_REPOSITORY]...
 Show statuses of Git repositories given in arguments or of all 
 repositories found from the current working directory when no arguments 
 are specified.
 
 Options:
-  -f	Perform git fetch.
-  -v	Verbose mode: show git log for the commits behind/ahead.
+  -fF	Do not (f) or do run (F) git fetch.
+	Git fetch is not done by default.
+
+  -lL	Do not (l) or do show (L) git log for the commits behind/ahead.
+	Git logs are not showed by default.
+
+Git Config:
+  gitsup.rungitfetch	true/false valued. Overriden by option -fF.
+  gitsup.showgitlog	true/false valued. Overriden by option -lL.
 ~~~
 
 ## Example
