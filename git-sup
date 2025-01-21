@@ -18,7 +18,7 @@ Options:
 
 Git Config:
   gitsup.rungitfetch	true/false valued. Overridden by option -f, -F.
-  gitsup.showgitlog	true/false valued. Overridden by option -l, -L.
+  gitsup.gitloglevel	{0, 1, 2} valued. Overridden by option -l.
 EOF
 }
 
