@@ -15,12 +15,14 @@ Options:
   -f, -F	Do not (f) or do (F) run git fetch.
 		Git fetch is not done by default.
 
-  -l, -L	Do not (l) or do (L) show git logs for the commits 
-		behind/ahead. Git logs are not showed by default.
+  -l, -L	Level of git logs for the commits behind/ahead.
+		0: no logs
+		1; only for HEAD
+		2: for all branches
 
 Git Config:
-  gitsup.rungitfetch	true/false valued. Overridden by option -fF.
-  gitsup.showgitlog	true/false valued. Overridden by option -lL.
+  gitsup.rungitfetch	true/false valued. Overridden by option -f, -F.
+  gitsup.showgitlog	true/false valued. Overridden by option -l, -L.
 ~~~
 
 ## Example

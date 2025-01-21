@@ -11,8 +11,10 @@ Options:
   -f, -F	Do not (f) or do (F) run git fetch.
 		Git fetch is not done by default.
 
-  -l, -L	Do not (l) or do (L) show git logs for the commits 
-		behind/ahead. Git logs are not showed by default.
+  -l, -L	Level of git logs for the commits behind/ahead.
+		0: no logs
+		1; only for HEAD
+		2: for all branches
 
 Git Config:
   gitsup.rungitfetch	true/false valued. Overridden by option -f, -F.
@@ -31,12 +33,16 @@ BLUE=$(tput setaf 4)
 MAGENTA=$(tput setaf 5)
 CYAN=$(tput setaf 6)
 WHITE=$(tput setaf 7)
+LIGHT_GRAY=$(tput setaf 246)
 BRIGHT=$(tput bold)
 NORMAL=$(tput sgr0)
 BLINK=$(tput blink)
 REVERSE=$(tput smso)
 UNDERLINE=$(tput smul)
 BOLD=$(tput bold)
+ARROW_DOWN_POINTING=$(echo $'\U1F81F')
+ARROW_UP_POINTING=$(echo $'\U1F81D')
+ASTERISK=$(echo $'\U2731')
 
 CURRENT_WORKING_DIRECTORY="$(pwd)"
 trap "cd '${CURRENT_WORKING_DIRECTORY}'" 0
@@ -48,15 +54,19 @@ if [[ "${GITCONFIG_RUN_GIT_FETCH}" == "true" ]]; then
 	RUN_GIT_FETCH="true"
 fi
 
-# Try to retrieve SHOW_GIT_LOG from gitconfig
-SHOW_GIT_LOG="false"
-GITCONFIG_SHOW_GIT_LOG="$(git config "gitsup.showgitlog")"
-if [[ "${GITCONFIG_SHOW_GIT_LOG}" == "true" ]]; then
-	SHOW_GIT_LOG="true"
+# Try to retrieve GIT_LOG_LEVEL from gitconfig
+GIT_LOG_LEVEL="0"
+GITCONFIG_GIT_LOG_LEVEL="$(git config "gitsup.gitloglevel")"
+if [[ "${GITCONFIG_GIT_LOG_LEVEL}" -ge "0" ]] && [[ "${GITCONFIG_GIT_LOG_LEVEL}" -le "2" ]]; then
+	GIT_LOG_LEVEL="${GITCONFIG_GIT_LOG_LEVEL}"
+else 
+	printf "!ERROR! Unknown GITCONFIG_GIT_LOG_LEVEL[%s]\n\n"
+	print_usage
+	exit 1
 fi
 
 DEBUG="false"
-while getopts ":hfFlLd" ARG; do
+while getopts ":hfFl:d" ARG; do
 	case "${ARG}" in
 		h)
 			print_usage
@@ -69,16 +79,18 @@ while getopts ":hfFlLd" ARG; do
 			RUN_GIT_FETCH="true"
 			;;
 		l)
-			SHOW_GIT_LOG="false"
-			;;
-		L)
-			SHOW_GIT_LOG="true"
+			GIT_LOG_LEVEL="${OPTARG}"
+			if [[ "${GIT_LOG_LEVEL}" -lt "0" ]] || [[ "${GIT_LOG_LEVEL}" -gt "2" ]]; then
+				printf "!ERROR! Unknown GIT_LOG_LEVEL[%s]\n\n"
+				print_usage
+				exit 1
+			fi
 			;;
 		d)
 			DEBUG="true"
 			;;
 		*)
-			printf "Unknown option: -%s\n\n" "${OPTARG}"
+			printf "!ERROR! Unknown option: -%s\n\n" "${OPTARG}"
 			print_usage
 			exit 1
 			;;
@@ -142,6 +154,19 @@ STX=$'\002'
 ETX=$'\003'
 GIT_BRANCH_LINE_REGEX="^${STX}( |\*)${ETX}${STX}(.*)${ETX}${STX}(.*)${ETX}${STX}(.*)${ETX}${STX}(.*)${ETX}${STX}(.*)${ETX}$"
 
+function show_git_log(){
+	printf "${LIGHT_GRAY}"
+	GIT_LOG_BEHIND="$(git log "${GIT_BRANCH_LINE_REF_NAME}".."${GIT_BRANCH_LINE_UPSTREAM}" --pretty=format:"         %C(yellow)%h %Cblue%ad %Cgreen%<(7)%aN%Cred %Creset%s" --date=iso8601-local)"
+	if [[ ! -z "${GIT_LOG_BEHIND}" ]]; then
+		printf "         %s%s\n%s\n" "${ARROW_DOWN_POINTING}" "${ARROW_DOWN_POINTING}" "${GIT_LOG_BEHIND}"
+	fi
+	GIT_LOG_AHEAD="$(git log "${GIT_BRANCH_LINE_UPSTREAM}".."${GIT_BRANCH_LINE_REF_NAME}" --pretty=format:"         %C(yellow)%h %Cblue%ad %Cgreen%<(7)%aN%Cred %Creset%s" --date=iso8601-local)"
+	if [[ ! -z "${GIT_LOG_AHEAD}" ]]; then
+		printf "         %s%s\n%s\n" "${ARROW_UP_POINTING}" "${ARROW_UP_POINTING}" "${GIT_LOG_AHEAD}"
+	fi
+	printf "${NORMAL}"
+}
+
 for GIT_REPOSITORY in "${GIT_REPOSITORY_ARRAY[@]}"; do
 	cd "${GIT_REPOSITORY}"
 	
@@ -188,6 +213,9 @@ for GIT_REPOSITORY in "${GIT_REPOSITORY_ARRAY[@]}"; do
 		fi
 		
 		GIT_BRANCH_LINE_IS_HEAD="${BASH_REMATCH[1]}"
+		if [[ "${GIT_BRANCH_LINE_IS_HEAD}" = *[![:space:]]* ]]; then
+			GIT_BRANCH_LINE_IS_HEAD="${ASTERISK}"
+		fi
 		GIT_BRANCH_LINE_REF_NAME="${BASH_REMATCH[2]}"
 		GIT_BRANCH_LINE_PUSH_TRACK="${BASH_REMATCH[3]}"
 		if [[ ! -z "${GIT_BRANCH_LINE_PUSH_TRACK}" ]]; then
@@ -200,19 +228,13 @@ for GIT_REPOSITORY in "${GIT_REPOSITORY_ARRAY[@]}"; do
 		
 		if [[ "${LOCAL_CURRENT_BRANCH}" != "${GIT_BRANCH_LINE_REF_NAME}" ]]; then
 			printf "   %s %s%s \\u279C ${BLUE}%s${NORMAL}\n" "${GIT_BRANCH_LINE_IS_HEAD}" "${GIT_BRANCH_LINE_REF_NAME}" "${GIT_BRANCH_LINE_PUSH_TRACK}" "${GIT_BRANCH_LINE_UPSTREAM}"
+			if [[ "${GIT_UPSTREAM_NOT_GONE}" -eq 0 ]] && [[ ${GIT_LOG_LEVEL} -eq 2 ]]; then
+				show_git_log
+			fi
 		else
-			printf "   %s ${GREEN}%s${NORMAL}%s \\u279C ${BLUE}%s${NORMAL}\n" "${GIT_BRANCH_LINE_IS_HEAD}" "${GIT_BRANCH_LINE_REF_NAME}" "${GIT_BRANCH_LINE_PUSH_TRACK}" "${GIT_BRANCH_LINE_UPSTREAM}"
-			
-			if [[ "${GIT_UPSTREAM_NOT_GONE}" -eq 0 ]] && ${SHOW_GIT_LOG}; then
-				GIT_LOG_BEHIND="$(git log "${GIT_BRANCH_LINE_REF_NAME}".."${GIT_BRANCH_LINE_UPSTREAM}" --pretty=format:"     %C(yellow)%h %Cblue%ad %Cgreen%<(7)%aN%Cred %Creset%s" --date=iso8601-local)"
-				if [[ ! -z "${GIT_LOG_BEHIND}" ]]; then
-					printf "     ↓↓\n%s\n" "${GIT_LOG_BEHIND}"
-				fi
-				
-				GIT_LOG_AHEAD="$(git log "${GIT_BRANCH_LINE_UPSTREAM}".."${GIT_BRANCH_LINE_REF_NAME}" --pretty=format:"     %C(yellow)%h %Cblue%ad %Cgreen%<(7)%aN%Cred %Creset%s" --date=iso8601-local)"
-				if [[ ! -z "${GIT_LOG_AHEAD}" ]]; then
-					printf "     ↑↑\n%s\n" "${GIT_LOG_AHEAD}"
-				fi
+			printf "   ${GREEN}%s %s${NORMAL}%s \\u279C ${BLUE}%s${NORMAL}\n" "${GIT_BRANCH_LINE_IS_HEAD}" "${GIT_BRANCH_LINE_REF_NAME}" "${GIT_BRANCH_LINE_PUSH_TRACK}" "${GIT_BRANCH_LINE_UPSTREAM}"
+			if [[ "${GIT_UPSTREAM_NOT_GONE}" -eq 0 ]] && [[ ${GIT_LOG_LEVEL} -ne 0 ]]; then
+				show_git_log
 			fi
 		fi
 	done <<< "${GIT_BRANCH}"
