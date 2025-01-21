@@ -56,7 +56,7 @@ if [[ "${GITCONFIG_SHOW_GIT_LOG}" == "true" ]]; then
 fi
 
 DEBUG="false"
-while getopts ":hfld" ARG; do
+while getopts ":hfFlLd" ARG; do
 	case "${ARG}" in
 		h)
 			print_usage
@@ -196,19 +196,20 @@ for GIT_REPOSITORY in "${GIT_REPOSITORY_ARRAY[@]}"; do
 		GIT_BRANCH_LINE_OBJECT_NAME="${BASH_REMATCH[4]}"
 		GIT_BRANCH_LINE_CONTENTS="${BASH_REMATCH[5]}"
 		GIT_BRANCH_LINE_UPSTREAM="${BASH_REMATCH[6]}"
+		GIT_UPSTREAM_NOT_GONE="$(git show-branch "remotes/${GIT_BRANCH_LINE_UPSTREAM}" >/dev/null 2>/dev/null;echo $?)"
 		
 		if [[ "${LOCAL_CURRENT_BRANCH}" != "${GIT_BRANCH_LINE_REF_NAME}" ]]; then
 			printf "   %s %s%s \\u279C ${BLUE}%s${NORMAL}\n" "${GIT_BRANCH_LINE_IS_HEAD}" "${GIT_BRANCH_LINE_REF_NAME}" "${GIT_BRANCH_LINE_PUSH_TRACK}" "${GIT_BRANCH_LINE_UPSTREAM}"
 		else
 			printf "   %s ${GREEN}%s${NORMAL}%s \\u279C ${BLUE}%s${NORMAL}\n" "${GIT_BRANCH_LINE_IS_HEAD}" "${GIT_BRANCH_LINE_REF_NAME}" "${GIT_BRANCH_LINE_PUSH_TRACK}" "${GIT_BRANCH_LINE_UPSTREAM}"
 			
-			if ${SHOW_GIT_LOG}; then
-				GIT_LOG_BEHIND="$(git log "${GIT_BRANCH_LINE_REF_NAME}".."${GIT_BRANCH_LINE_UPSTREAM}" --no-merges --pretty=format:"     %C(yellow)%h %Cblue%ad %Cgreen%<(7)%aN%Cred %Creset%s" --date=iso8601)"
+			if [[ "${GIT_UPSTREAM_NOT_GONE}" -eq 0 ]] && ${SHOW_GIT_LOG}; then
+				GIT_LOG_BEHIND="$(git log "${GIT_BRANCH_LINE_REF_NAME}".."${GIT_BRANCH_LINE_UPSTREAM}" --pretty=format:"     %C(yellow)%h %Cblue%ad %Cgreen%<(7)%aN%Cred %Creset%s" --date=iso8601)"
 				if [[ ! -z "${GIT_LOG_BEHIND}" ]]; then
 					printf "     ↓↓\n%s\n" "${GIT_LOG_BEHIND}"
 				fi
 				
-				GIT_LOG_AHEAD="$(git log "${GIT_BRANCH_LINE_UPSTREAM}".."${GIT_BRANCH_LINE_REF_NAME}" --no-merges --pretty=format:"     %C(yellow)%h %Cblue%ad %Cgreen%<(7)%aN%Cred %Creset%s" --date=iso8601)"
+				GIT_LOG_AHEAD="$(git log "${GIT_BRANCH_LINE_UPSTREAM}".."${GIT_BRANCH_LINE_REF_NAME}" --pretty=format:"     %C(yellow)%h %Cblue%ad %Cgreen%<(7)%aN%Cred %Creset%s" --date=iso8601)"
 				if [[ ! -z "${GIT_LOG_AHEAD}" ]]; then
 					printf "     ↑↑\n%s\n" "${GIT_LOG_AHEAD}"
 				fi
