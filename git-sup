@@ -40,6 +40,7 @@ BLINK=$(tput blink)
 REVERSE=$(tput smso)
 UNDERLINE=$(tput smul)
 BOLD=$(tput bold)
+ARROW_RIGHT_POINTING=$(echo $'\U1F81E')
 ARROW_DOWN_POINTING=$(echo $'\U1F81F')
 ARROW_UP_POINTING=$(echo $'\U1F81D')
 ASTERISK=$(echo $'\U2731')
@@ -227,12 +228,12 @@ for GIT_REPOSITORY in "${GIT_REPOSITORY_ARRAY[@]}"; do
 		GIT_UPSTREAM_NOT_GONE="$(git show-branch "remotes/${GIT_BRANCH_LINE_UPSTREAM}" >/dev/null 2>/dev/null;echo $?)"
 		
 		if [[ "${LOCAL_CURRENT_BRANCH}" != "${GIT_BRANCH_LINE_REF_NAME}" ]]; then
-			printf "   %s %s%s \\u279C ${BLUE}%s${NORMAL}\n" "${GIT_BRANCH_LINE_IS_HEAD}" "${GIT_BRANCH_LINE_REF_NAME}" "${GIT_BRANCH_LINE_PUSH_TRACK}" "${GIT_BRANCH_LINE_UPSTREAM}"
+			printf "   %s %s%s %s ${BLUE}%s${NORMAL}\n" "${GIT_BRANCH_LINE_IS_HEAD}" "${GIT_BRANCH_LINE_REF_NAME}" "${GIT_BRANCH_LINE_PUSH_TRACK}" "${ARROW_RIGHT_POINTING}" "${GIT_BRANCH_LINE_UPSTREAM}"
 			if [[ "${GIT_UPSTREAM_NOT_GONE}" -eq 0 ]] && [[ ${GIT_LOG_LEVEL} -eq 2 ]]; then
 				show_git_log
 			fi
 		else
-			printf "   ${GREEN}%s %s${NORMAL}%s \\u279C ${BLUE}%s${NORMAL}\n" "${GIT_BRANCH_LINE_IS_HEAD}" "${GIT_BRANCH_LINE_REF_NAME}" "${GIT_BRANCH_LINE_PUSH_TRACK}" "${GIT_BRANCH_LINE_UPSTREAM}"
+			printf "   ${GREEN}%s %s${NORMAL}%s %s ${BLUE}%s${NORMAL}\n" "${GIT_BRANCH_LINE_IS_HEAD}" "${GIT_BRANCH_LINE_REF_NAME}" "${GIT_BRANCH_LINE_PUSH_TRACK}" "${ARROW_RIGHT_POINTING}" "${GIT_BRANCH_LINE_UPSTREAM}"
 			if [[ "${GIT_UPSTREAM_NOT_GONE}" -eq 0 ]] && [[ ${GIT_LOG_LEVEL} -ne 0 ]]; then
 				show_git_log
 			fi
