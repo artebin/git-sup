@@ -28,7 +28,7 @@ Git Config:
 ## Example
 
 ~~~
-njames@rollin:MyProjects$ git-sup -f
+njames@rollin:MyProjects$ git-sup
 ⏺ boo
    * main ➜ origin/main
 
